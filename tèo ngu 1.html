@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial; }
+
+        body { background: #f4f4f4; }
+
+        /* ======= LOGIN ======= */
+        #loginPage {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #e6f0ff;
+        }
+
+        #loginBox {
+            background: white;
+            padding: 25px;
+            width: 320px;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.15);
+        }
+
+        #loginBox h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #loginBox input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        #loginBox button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        /* ======= MAIN APP ======= */
+        header {
+            background: #007bff;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            font-size: 25px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            display: none;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #333;
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            color: white;
+            display: none;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+        }
+
+        .sidebar a:hover, .sidebar .active {
+            background: #575757;
+        }
+
+        .content {
+            margin-left: 220px;
+            padding: 90px 20px 20px;
+            display: none;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .btn-add { background: #28a745; margin-bottom: 15px; }
+        .btn-edit { background: #ffc107; }
+        .btn-delete { background: #dc3545; }
+
+        /* SEARCH + FILTER BAR */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .toolbar input, .toolbar select {
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* POPUP */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 20px;
+            width: 350px;
+            border-radius: 10px;
+        }
+
+        .popup-content input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn-save { background: #007bff; width: 100%; }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN PAGE ================= -->
+<div id="loginPage">
+    <div id="loginBox">
+        <h3>Đăng Nhập</h3>
+        <input id="username" type="text" placeholder="Tên đăng nhập">
+        <input id="password" type="password" placeholder="Mật khẩu">
+        <button onclick="login()">Đăng nhập</button>
+    </div>
+</div>
+
+<header>HỆ THỐNG QUẢN LÝ</header>
+
+<div class="sidebar">
+    <a class="menu active" onclick="showPage('dashboard')">Dashboard</a>
+    <a class="menu" onclick="showPage('employees')">Nhân viên</a>
+    <a class="menu" onclick="showPage('departments')">Phòng ban</a>
+    <a class="menu" onclick="showPage('settings')">Cài đặt</a>
+</div>
+
+<div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="page active">
+        <h2>Dashboard</h2>
+        <p>Chào mừng bạn.</p>
+    </div>
+
+    <!-- NHÂN VIÊN -->
+    <div id="employees" class="page">
+        <h2>Danh Sách Nhân Viên</h2>
+
+        <!-- THANH TÌM KIẾM / LỌC -->
+        <div class="toolbar">
+            <input id="searchInput" type="text" placeholder="Tìm theo tên..." onkeyup="applyFilters()">
+            <select id="filterDept" onchange="applyFilters()">
+                <option value="">-- Tất cả phòng ban --</option>
+                <option>Kinh Doanh</option>
+                <option>Marketing</option>
+                <option>Kế Toán</option>
+                <option>IT</option>
+            </select>
+        </div>
+
+        <button id="addBtn" class="btn btn-add" onclick="openAddForm()">+ Thêm Nhân Viên</button>
+
+        <table id="employeeTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable('id')">ID</th>
+                    <th onclick="sortTable('name')">Họ Tên</th>
+                    <th onclick="sortTable('role')">Chức Vụ</th>
+                    <th onclick="sortTable('dept')">Phòng Ban</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- PHÒNG BAN -->
+    <div id="departments" class="page">
+        <h2>Phòng Ban</h2>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings" class="page">
+        <h2>Cài Đặt</h2>
+    </div>
+</div>
+
+<!-- POPUP FORM -->
+<div class="popup" id="popupForm">
+    <div class="popup-content">
+        <h3 id="popupTitle">Thêm Nhân Viên</h3>
+
+        <input type="text" id="empId" placeholder="ID">
+        <input type="text" id="empName" placeholder="Họ Tên">
+        <input type="text" id="empRole" placeholder="Chức Vụ">
+        <input type="text" id="empDept" placeholder="Phòng Ban">
+
+        <button class="btn btn-save" onclick="saveEmployee()">Lưu</button>
+    </div>
+</div>
+<script>
+
+    /* ========================
+       ĐĂNG NHẬP VÀ PHÂN QUYỀN
+    ==========================*/
+
+    const accounts = [
+        { user: "admin", pass: "123", role: "admin" },
+        { user: "user", pass: "123", role: "user" }
+    ];
+
+    let currentRole = "";
+
+    function login() {
+        let u = username.value;
+        let p = password.value;
+
+        let acc = accounts.find(a => a.user === u && a.pass === p);
+
+        if (!acc) {
+            alert("Sai tài khoản hoặc mật khẩu!");
+            return;
+        }
+
+        currentRole = acc.role;
+
+        // Ẩn login – Hiện hệ thống
+        loginPage.style.display = "none";
+        document.querySelector("header").style.display = "block";
+        document.querySelector(".sidebar").style.display = "block";
+        document.querySelector(".content").style.display = "block";
+
+        if (currentRole === "user") {
+            addBtn.style.display = "none";
+        }
+
+        renderTable();
+    }
+
+
+    /* ========================
+       CHUYỂN TRANG MENU
+    ==========================*/
+    function showPage(pageId) {
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById(pageId).classList.add("active");
+
+        document.querySelectorAll(".menu").forEach(m => m.classList.remove("active"));
+        event.target.classList.add("active");
+    }
+
+
+
+    /* ========================
+       QUẢN LÝ NHÂN VIÊN
+    ==========================*/
+    let employees = JSON.parse(localStorage.getItem("employees")) || [];
+    let editIndex = -1;
+
+    function renderTable(list = employees) {
+        const tbody = document.querySelector("#employeeTable tbody");
+        tbody.innerHTML = "";
+
+        list.forEach((emp, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${emp.id}</td>
+                    <td>${emp.name}</td>
+                    <td>${emp.role}</td>
+                    <td>${emp.dept}</td>
+                    <td>
+                        ${currentRole === "admin" ? `
+                        <button class="btn btn-edit" onclick="editEmployee(${index})">Sửa</button>
+                        <button class="btn btn-delete" onclick="deleteEmployee(${index})">Xóa</button>
+                        ` : `
+                        <button class="btn btn-edit" disabled style="opacity:0.4;">Sửa</button>
+                        <button class="btn btn-delete" disabled style="opacity:0.4;">Xóa</button>
+                        `}
+                    </td>
+                </tr>
+            `;
+        });
+
+        localStorage.setItem("employees", JSON.stringify(employees));
+    }
+
+
+
+    /* ========================
+       TÌM KIẾM + LỌC
+    ==========================*/
+    function applyFilters() {
+        let keyword = searchInput.value.toLowerCase();
+        let dept = filterDept.value;
+
+        let result = employees.filter(emp => {
+
+            let matchKeyword = emp.name.toLowerCase().includes(keyword);
+            let matchDept = dept === "" || emp.dept === dept;
+
+            return matchKeyword && matchDept;
+        });
+
+        renderTable(result);
+    }
+
+
+
+    /* ========================
+       SẮP XẾP BẢNG
+    ==========================*/
+    let sortState = {
+        id: 1,
+        name: 1,
+        role: 1,
+        dept: 1
+    };
+
+    function sortTable(field) {
+        sortState[field] *= -1;
+
+        employees.sort((a, b) => {
+            let A = a[field].toString().toLowerCase();
+            let B = b[field].toString().toLowerCase();
+
+            if (A < B) return -1 * sortState[field];
+            if (A > B) return 1 * sortState[field];
+            return 0;
+        });
+
+        applyFilters();
+    }
+
+
+
+    /* ========================
+       THÊM / SỬA / XOÁ
+    ==========================*/
+
+    function openAddForm() {
+        editIndex = -1;
+        popupTitle.innerText = "Thêm Nhân Viên";
+
+        empId.value = "";
+        empName.value = "";
+        empRole.value = "";
+        empDept.value = "";
+
+        popupForm.style.display = "flex";
+    }
+
+    function editEmployee(index) {
+        editIndex = index;
+
+        let emp = employees[index];
+
+        popupTitle.innerText = "Sửa Nhân Viên";
+
+        empId.value = emp.id;
+        empName.value = emp.name;
+        empRole.value = emp.role;
+        empDept.value = emp.dept;
+
+        popupForm.style.display = "flex";
+    }
+
+    function deleteEmployee(index) {
+        if (currentRole !== "admin") return;
+
+        if (confirm("Bạn có chắc chắn muốn xoá?")) {
+            employees.splice(index, 1);
+            renderTable();
+        }
+    }
+
+    function saveEmployee() {
+        let id = empId.value;
+        let name = empName.value;
+        let role = empRole.value;
+        let dept = empDept.value;
+
+        if (!id || !name || !role || !dept) {
+            alert("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+
+        let newEmp = { id, name, role, dept };
+
+        if (editIndex === -1) employees.push(newEmp);
+        else employees[editIndex] = newEmp;
+
+        popupForm.style.display = "none";
+        renderTable();
+    }
+
+
+    // Ấn ra ngoài để tắt popup
+    window.onclick = e => {
+        if (e.target == popupForm) {
+            popupForm.style.display = "none";
+        }
+    };
+
+</script>
